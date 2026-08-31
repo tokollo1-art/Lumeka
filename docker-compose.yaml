@@ -1,0 +1,47 @@
+services:
+  # ============================================
+  # POSTGRESQL DATABASE
+  # Stores all Lumeka data: users, tasks, SME profiles,
+  # corporate records, and the Experience Ledger
+  # ============================================
+  postgres:
+    image: postgres:16-alpine
+    container_name: lumeka-postgres
+    ports:
+      - "5432:5432"
+    environment:
+      POSTGRES_DB: lumeka
+      POSTGRES_USER: lumeka_user
+      POSTGRES_PASSWORD: lumeka_password
+    command: postgres -c max_connections=200
+    volumes:
+      - postgres-data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U lumeka_user"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      # ============================================
+      # REDIS CACHE
+      # Handles: JWT sessions, real-time matching,
+      # geospatial indexing, and caching for fast feeds
+      # ============================================
+  redis:
+    image: redis:7-alpine
+    container_name: lumeka-redis
+    ports:
+      - "6379:6379"
+    volumes:
+      - redis-data:/data
+    healthcheck:
+      test: [ "CMD", "redis-cli", "ping" ]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    # ============================================
+    # PERSISTENT VOLUMES
+    # These keep your data safe even when containers stop
+    # ============================================
+volumes:
+  postgres-data:
+  redis-data:
